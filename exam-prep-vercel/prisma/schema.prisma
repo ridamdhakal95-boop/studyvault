@@ -1,0 +1,72 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ContentType {
+  QUESTION
+  NUMERICAL
+  SHORT
+  LONG
+  GIVE_REASON
+  FORMULA
+  NOTE
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String   @default("Administrator")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Chapter {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  description String?
+  order       Int       @default(0)
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  content     Content[]
+
+  @@index([published, order])
+}
+
+model Content {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  type        ContentType
+  status      ContentStatus @default(DRAFT)
+  difficulty  String        @default("Medium")
+  tags        String[]
+  body        String?
+  given       String?
+  required    String?
+  formula     String?
+  solution    String?
+  finalAnswer String?
+  units       String?
+  variables   String?
+  chapterId   String
+  chapter     Chapter       @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  priority    Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([chapterId, type, status])
+  @@index([status, updatedAt])
+}

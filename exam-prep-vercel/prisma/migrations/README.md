@@ -1,0 +1,1 @@
+Run `npx prisma migrate dev --name init` locally to generate the first migration from schema.prisma, then commit the generated migration directory. On Vercel/production use `npx prisma migrate deploy`.

@@ -1,0 +1,7 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
+import { chapterSchema } from "@/lib/validation";
+function slugify(s:string){return s.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"")||`chapter-${Date.now()}`}
+export async function PUT(req:Request,{params}:{params:Promise<{id:string}>}){if(!(await getSession()))return NextResponse.json({error:'Unauthorized'},{status:401});const {id}=await params;try{const input=chapterSchema.parse(await req.json());const existing=await prisma.chapter.findUnique({where:{id}});if(!existing)return NextResponse.json({error:'Chapter not found.'},{status:404});let slug=existing.slug;if(existing.title!==input.title){const base=slugify(input.title);slug=base;let i=2;while(await prisma.chapter.findFirst({where:{slug,id:{not:id}}})){slug=`${base}-${i++}`}}const chapter=await prisma.chapter.update({where:{id},data:{...input,slug}});return NextResponse.json({chapter})}catch{return NextResponse.json({error:'Invalid chapter data.'},{status:400})}}
+export async function DELETE(_req:Request,{params}:{params:Promise<{id:string}>}){if(!(await getSession()))return NextResponse.json({error:'Unauthorized'},{status:401});const {id}=await params;try{await prisma.chapter.delete({where:{id}});return NextResponse.json({ok:true})}catch{return NextResponse.json({error:'Chapter not found.'},{status:404})}}
